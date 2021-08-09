@@ -57,10 +57,46 @@ fn parse_date(s: &str) -> Option<(u32, u32, u32)> {
     })
 }
 
-fn sanitizer() {
+/// AddressSanitizer a fast memory error detector.
+// HWAddressSanitizer a memory error detector similar to AddressSanitizer, but based on partial hardware assistance.
+// LeakSanitizer a run-time memory leak detector.
+// MemorySanitizer a detector of uninitialized reads.
+// ThreadSanitizer a fast data race detector.
+fn sanitizer_stack_buffer_overflow() {
     let x = vec![1, 2, 3, 4];
     let _y = unsafe { *x.as_ptr().offset(6) };
     println!("{}", _y)
+}
+
+static mut P: *mut usize = std::ptr::null_mut();
+fn sanitizer_stack_use_after_scope() {
+    unsafe {
+        {
+            let mut x = 0;
+            P = &mut x;
+        }
+        std::ptr::write_volatile(P, 123);
+        println!("{}", *P)
+    }
+}
+
+use std::mem::MaybeUninit;
+fn sanitizer_use_of_uninitialized_value() {
+    unsafe {
+        let a = MaybeUninit::<[usize; 4]>::uninit();
+        let a = a.assume_init();
+        println!("{}", a[2]);
+    }
+}
+
+static mut A: usize = 0;
+fn sanitizer_data_race() {
+    let t = std::thread::spawn(|| {
+        unsafe { A += 1 };
+    });
+    unsafe { A += 1 };
+
+    t.join().unwrap();
 }
 
 /// Rust builds the toolchain example
@@ -80,17 +116,22 @@ fn main() {
         println!("r1 is: {}", *p1);
         println!("r2 is: {}", *p2);
     }
+    {
+        use dangerous::*;
+        let input = dangerous::input(b"hello");
+        let result: Result<_, Invalid> = input.read_partial(|r| r.read_u8());
+        assert_eq!(result, Ok((b'h', dangerous::input(b"ello"))));
 
-    use dangerous::*;
-    let input = dangerous::input(b"hello");
-    let result: Result<_, Invalid> = input.read_partial(|r| r.read_u8());
-    assert_eq!(result, Ok((b'h', dangerous::input(b"ello"))));
+    }
 
     // let s = "Hello world";  /* .unwrap() */
     // let _ = s.find("wo").unwrap();
     // // let _ = s.find("wo").unwrap();
     // let ignore = "s.unwrap();";
 
-    // 使用编译器内置的快速内存错误检测功能
-    sanitizer();
+    // 使用sanitizer检测功能
+    //sanitizer_stack_buffer_overflow();
+    //sanitizer_stack_use_after_scope();
+    //sanitizer_use_of_uninitialized_value();
+    //sanitizer_data_race();
 }
