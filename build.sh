@@ -51,19 +51,6 @@ echo -e "cargo-depgraph:  软件依赖图\n"
 cargo depgraph --all-deps | dot -Tpng > workplace/cargo-depgraph.png || true
 echo -e "\n\n\n"
 
-echo -e "tokei:  代码行数统计\n"
-cargo install tokei
-tokei > workplace/cargo-tokei.txt 2>&1 || true
-echo -e "\n\n\n"
-
-echo -e "cargo-count:  代码行数统计\n"
-#git clone https://github.com/kbknapp/cargo-count && cd cargo-count
-#cargo build
-#cp ./target/debug/cargo-count /root/.cargo/bin/cargo-count
-#cd ..
-cargo count --separator , --unsafe-statistics > workplace/cargo-count.txt 2>&1 || true
-echo -e "\n\n\n"
-
 echo -e "cargo-udeps:  检查Cargo.toml中未使用的依赖\n"
 cargo +stable install cargo-udeps --locked
 cargo +nightly udeps --all-targets > workplace/cargo-udeps.txt 2>&1 || true
@@ -230,6 +217,19 @@ build_demo_path=`pwd`
 #echo ${build_demo_path}
 # json toml cbor yaml
 rust-code-analysis-cli -m -O yaml  -p ${build_demo_path}/src  > workplace/cargo-rust-code-analysis.txt 2>&1 || true
+echo -e "\n\n\n"
+
+echo -e "tokei:  代码行数统计\n"
+cargo install tokei
+tokei > workplace/cargo-tokei.txt 2>&1 || true
+echo -e "\n\n\n"
+
+echo -e "cargo-count:  代码行数统计\n"
+#git clone https://github.com/kbknapp/cargo-count && cd cargo-count
+#cargo build
+#cp ./target/debug/cargo-count /root/.cargo/bin/cargo-count
+#cd ..
+cargo count --separator , --unsafe-statistics > workplace/cargo-count.txt 2>&1 || true
 echo -e "\n\n\n"
 
 echo -e "####################################度量 end####################################\n\n\n"
